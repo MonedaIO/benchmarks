@@ -36,7 +36,7 @@ const quantile = (sorted: number[], q: number) =>
  *
  * `clusters[i]` names the cluster of `values[i]`; when given, whole
  * clusters are resampled (a cluster bootstrap), because near-duplicate
- * items are not independent evidence (spec §4 statistical power).
+ * items are not independent evidence.
  *
  * When every value is in [0, 1] the interval is widened to cover the
  * Wilson interval of the same mean: for data bounded in [0, 1] the variance
@@ -110,7 +110,7 @@ export function itemMeans(
   }
   return Object.fromEntries(
     Object.entries(acc).map(([id, e]) => [id, e.sum / e.n]),
-  );
+ );
 }
 
 /** itemId -> cluster, for the grades that carry one (the runner copies
@@ -140,7 +140,7 @@ export function scoreWithCI(
       ...opts,
       clusters: clustered ? ids.map((id) => cl[id] ?? id) : undefined,
     },
-  );
+ );
 }
 
 /** One error policy for every bench: a system error ("error") or a judge
@@ -239,7 +239,7 @@ export function cohensKappa<T>(a: T[], b: T[]): number {
   if (a.length !== b.length || a.length === 0) {
     throw new Error(
       "cohensKappa: need two equal-length, non-empty label lists",
-    );
+   );
   }
   const n = a.length;
   let agree = 0;

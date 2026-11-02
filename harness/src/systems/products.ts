@@ -6,7 +6,7 @@ import { env, postJson } from "./http";
 import { actualCost, estimate, type Provider, type Usage } from "./prices";
 
 /**
- * Product track (spec §4): each product live, through its public API, with
+ * Product track: each product live, through its public API, with
  * its own web search turned on and otherwise default settings (no
  * temperature, no system prompt). No retries at all (see postJson). Keys
  * are read from env at call time.
@@ -76,7 +76,7 @@ export function chatgpt(model: string): System {
         { authorization: `Bearer ${env("OPENAI_API_KEY")}` },
         { model, input: item.prompt, tools: [{ type: "web_search" }] },
         signal,
-      )) as OpenAiResponse;
+     )) as OpenAiResponse;
       const toolCalls: ToolCall[] = [];
       const parts: string[] = [];
       const sources: Source[] = [];
@@ -109,7 +109,7 @@ export function chatgpt(model: string): System {
         costUsd,
       };
     },
-  );
+ );
 }
 
 // ---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ export function claude(model: string): System {
           tools: [{ type: ANTHROPIC_WEB_SEARCH, name: "web_search" }],
         },
         signal,
-      )) as AnthropicResponse;
+     )) as AnthropicResponse;
       const toolCalls: ToolCall[] = [];
       let text = "";
       const sources: Source[] = [];
@@ -166,7 +166,7 @@ export function claude(model: string): System {
         } else if (
           b.type === "web_search_tool_result" &&
           Array.isArray(b.content)
-        ) {
+       ) {
           // An error result is an object, a success a list (no throw either way).
           const last = toolCalls[toolCalls.length - 1];
           if (last) {
@@ -192,7 +192,7 @@ export function claude(model: string): System {
       });
       return { text: withSources(text, sources), toolCalls, costUsd };
     },
-  );
+ );
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +223,7 @@ export function gemini(model: string): System {
           tools: [{ google_search: {} }],
         },
         signal,
-      )) as GeminiResponse;
+     )) as GeminiResponse;
       const c = res.candidates?.[0];
       const text = (c?.content?.parts ?? []).map((p) => p.text ?? "").join("");
       const g = c?.groundingMetadata;
@@ -233,7 +233,7 @@ export function gemini(model: string): System {
       }));
       const sources = (g?.groundingChunks ?? []).flatMap((ch) =>
         ch.web?.uri ? [{ url: ch.web.uri, title: ch.web.title }] : [],
-      );
+     );
       // Grounding bills per grounded request, not per query.
       const costUsd = actualCost("google", {
         inTokens: res.usageMetadata?.promptTokenCount,
@@ -242,7 +242,7 @@ export function gemini(model: string): System {
       });
       return { text: withSources(text, sources), toolCalls, costUsd };
     },
-  );
+ );
 }
 
 // ---------------------------------------------------------------------------
@@ -266,12 +266,12 @@ export function perplexity(model: string): System {
         { authorization: `Bearer ${env("PERPLEXITY_API_KEY")}` },
         { model, messages: [{ role: "user", content: item.prompt }] },
         signal,
-      )) as PerplexityResponse;
+     )) as PerplexityResponse;
       const text = res.choices?.[0]?.message?.content ?? "";
       const sources: Source[] = res.search_results?.length
         ? res.search_results.flatMap((r) =>
             r.url ? [{ url: r.url, title: r.title }] : [],
-          )
+         )
         : (res.citations ?? []).map((url) => ({ url }));
       // Sonar cites inline as [1], [2]: keep its numbering by listing all.
       const list = sources
@@ -289,5 +289,5 @@ export function perplexity(model: string): System {
         costUsd: res.usage?.cost?.total_cost,
       };
     },
-  );
+ );
 }

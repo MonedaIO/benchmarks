@@ -12,7 +12,7 @@ import { env, postJson } from "../systems/http";
 import { PRICES, type Price } from "../systems/prices";
 
 /**
- * LLM judges behind the core Judge interface (spec §4 "Grading stack"):
+ * LLM judges behind the core Judge interface:
  * criterion-level binary verdicts as JSON, answer anonymised, model id pinned
  * and recorded on every verdict. Two providers, so a judge never has to share
  * a provider with the system it grades. Benches call these through the core
@@ -102,7 +102,7 @@ export function openaiJudge(model: string): Judge {
     system: string,
     user: string,
     extra: Record<string, unknown>,
-  ) => {
+ ) => {
     const res = (await postJson(
       "https://api.openai.com/v1/chat/completions",
       { authorization: `Bearer ${env("OPENAI_API_KEY")}` },
@@ -114,7 +114,7 @@ export function openaiJudge(model: string): Judge {
           { role: "user", content: user },
         ],
       },
-    )) as { model?: string; choices?: { message?: { content?: string } }[] };
+   )) as { model?: string; choices?: { message?: { content?: string } }[] };
     return {
       text: res.choices?.[0]?.message?.content ?? "",
       model: res.model ?? model,
@@ -135,7 +135,7 @@ export function openaiJudge(model: string): Judge {
         system,
         user,
         model.startsWith("gpt-") ? { temperature: 0 } : {},
-      );
+     );
       return r.text;
     },
   };
@@ -161,7 +161,7 @@ export function anthropicJudge(model: string): Judge {
         ...(system ? { system } : {}),
         messages: [{ role: "user", content: user }],
       },
-    )) as { model?: string; content?: { type: string; text?: string }[] };
+   )) as { model?: string; content?: { type: string; text?: string }[] };
     const text = (res.content ?? [])
       .filter((b) => b.type === "text")
       .map((b) => b.text ?? "")
@@ -205,7 +205,7 @@ export function geminiJudge(model: string): Judge {
           ...thinking,
         },
       },
-    )) as {
+   )) as {
       modelVersion?: string;
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
@@ -247,7 +247,7 @@ export function openrouterJudge(model: string): Judge {
     system: string,
     user: string,
     extra: Record<string, unknown>,
-  ) => {
+ ) => {
     const res = (await postJson(
       `${process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1"}/chat/completions`,
       { authorization: `Bearer ${env("OPENROUTER_API_KEY")}` },
@@ -261,7 +261,7 @@ export function openrouterJudge(model: string): Judge {
           { role: "user", content: user },
         ],
       },
-    )) as { model?: string; choices?: { message?: { content?: string } }[] };
+   )) as { model?: string; choices?: { message?: { content?: string } }[] };
     return {
       text: res.choices?.[0]?.message?.content ?? "",
       model: res.model ?? model,

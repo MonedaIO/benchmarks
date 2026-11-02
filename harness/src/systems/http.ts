@@ -15,13 +15,13 @@ export class HttpError extends Error {
   constructor(
     readonly status: number,
     readonly detail: string,
-  ) {
+ ) {
     super(`HTTP ${status}`);
   }
 }
 
 /**
- * POST JSON and parse the reply. Never retries (spec §4: no retries): fetch
+ * POST JSON and parse the reply. Never retries: fetch
  * also rejects after the server has received a request (a reset while
  * waiting for headers), so a re-send could bill twice and keep a second
  * sample. A failure is recorded as the answer's error instead. Errors never
@@ -44,7 +44,7 @@ export async function postJson(
     throw new HttpError(
       res.status,
       `${url} ${res.status}: ${text.slice(0, 500)}`,
-    );
+   );
   }
   return JSON.parse(text);
 }

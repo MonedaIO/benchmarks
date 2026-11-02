@@ -51,7 +51,7 @@ export class JudgeError extends Error {
   override name = "JudgeError";
 }
 
-/** Names products use to identify themselves (the spec §4 product track). */
+/** Names products use to identify themselves. */
 const SELF_NAMES = [
   "Numa 1",
   "Moneda AI",
@@ -99,13 +99,13 @@ export function normaliseForJudge(
     .replace(
       /^[ \t]*\|?[ \t]*:?-{2,}:?[ \t]*(\|[ \t]*:?-{2,}:?[ \t]*)*\|?[ \t]*(\n|$)/gm,
       "",
-    )
+   )
     .replace(/^[ \t]*\|(.*)\|[ \t]*$/gm, (_, row: string) =>
       row
         .split("|")
         .map((c) => c.trim())
         .join(" | "),
-    );
+   );
 
   t = stripSelfIdentity(t, extraNames);
 
@@ -131,11 +131,11 @@ export function stripSelfIdentity(
     .replace(
       new RegExp(`\\b(I am|I'm|I’m|as|this is|from)\\s+(${any})\\b`, "gi"),
       "$1 [system]",
-    )
+   )
     .replace(
       new RegExp(`\\b(made|developed|built|trained) by\\s+(${any})\\b`, "gi"),
       "$1 by [system]",
-    );
+   );
   const always = [...ALWAYS_STRIP, ...extraNames].filter(Boolean).map(escape);
   return t.replace(new RegExp(`\\b(${always.join("|")})\\b`, "g"), "[system]");
 }
@@ -170,7 +170,7 @@ export async function judgeAnswer(
     } catch (err) {
       throw new JudgeError(
         `judge ${judge.id} failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+     );
     }
     for (const v of verdicts) {
       if (missing.some((c) => c.id === v.criterion) && !got.has(v.criterion))
@@ -181,7 +181,7 @@ export async function judgeAnswer(
   if (left.length > 0) {
     throw new JudgeError(
       `judge ${judge.id} returned no verdict for ${left.join(", ")} (asked twice)`,
-    );
+   );
   }
   return criteria.map((c) => got.get(c.id) as CriterionVerdict);
 }
@@ -226,10 +226,10 @@ export async function judgePanel(
         met: Object.fromEntries(vs.map((v) => [v.criterion, v.met])),
         rationale: Object.fromEntries(
           vs.map((v) => [v.criterion, v.rationale]),
-        ),
+       ),
       };
     }),
-  );
+ );
   const share: Record<string, number> = {};
   const agree: Record<string, boolean> = {};
   for (const c of criteria) {
@@ -276,7 +276,7 @@ export function panelAgreement(
         judges,
       },
     ]),
-  );
+ );
 }
 
 /** Provider of a judge id ("openai/<model>" -> "openai"). */

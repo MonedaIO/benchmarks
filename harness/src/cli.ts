@@ -151,7 +151,7 @@ function referenceNotes(system: System, benchName: string): string[] {
   return [];
 }
 
-/** The grading quote (spec §5: items x systems x judges): `load` is ONE
+/** The grading quote: `load` is ONE
  * judge's upper bound over all answers; each judge of the panel does it. */
 export function judgeQuoteLines(judges: Judge[], load: JudgeLoad): string[] {
   return [
@@ -217,7 +217,7 @@ export async function main(
         !makeSystem
           ? `unknown system: ${a ?? ""}`
           : `unknown bench: ${b ?? ""}`,
-      );
+     );
       deps.error(USAGE);
       return 1;
     }
@@ -246,7 +246,7 @@ export async function main(
           b,
           deps.today(),
           values.item ? `${a}-items` : a,
-        );
+       );
     let keep: Answer[] | undefined;
     if (values.retry) {
       const prevMeta = path.join(outDir, "run.json");
@@ -264,10 +264,10 @@ export async function main(
         meta.itemsSha256 !== itemsSha256(items) ||
         meta.runs !== runs ||
         meta.system !== system.id
-      ) {
+     ) {
         deps.error(
           "--retry: the selection, --runs or system differs from the earlier run; rerun with the same flags",
-        );
+       );
         return 1;
       }
       keep = readJsonl<Answer>(prevAnswers).filter((x) => !x.error);
@@ -278,7 +278,7 @@ export async function main(
     if (keep) {
       deps.log(
         `--retry: keeping ${keep.length} answers, redoing ${todo.length} item(s)`,
-      );
+     );
       if (todo.length === 0) return 0;
     }
     for (const l of quoteLines(system, b, todo, runs)) deps.log(l);
@@ -290,7 +290,7 @@ export async function main(
     if (a !== FREE && !values.yes) {
       deps.error(
         `Refusing to run "${a}" without --yes: it may make paid calls. Check the quote above, then rerun with --yes.`,
-      );
+     );
       return 2;
     }
     if (snapshot?.synthetic && a !== FREE) {
@@ -322,7 +322,7 @@ export async function main(
     const errors = answers.filter((x) => x.error).length;
     deps.log(
       `${answers.length} answers (${errors} errors) -> ${path.join(outDir, "answers.jsonl")}`,
-    );
+   );
     return 0;
   }
 
@@ -351,17 +351,17 @@ export async function main(
     if (want && !values.snapshot) {
       deps.error(
         `The run used snapshot ${want.file}; pass --snapshot <path to it> (sha256 ${want.sha256}).`,
-      );
+     );
       return 1;
     }
     if (
       want &&
       values.snapshot &&
       sha256File(path.resolve(values.snapshot)) !== want.sha256
-    ) {
+   ) {
       deps.error(
         `--snapshot ${values.snapshot} is not the snapshot the run used (${want.file}, sha256 ${want.sha256}).`,
-      );
+     );
       return 1;
     }
     const answers = readJsonl<Answer>(answersFile);
@@ -379,7 +379,7 @@ export async function main(
       items.filter((i) => answers.some((x) => x.itemId === i.id && !x.error)),
       judges,
       answers.map((x) => x.system),
-    );
+   );
     if (panel) {
       deps.error(`Refusing to grade: ${panel}.`);
       return 1;
@@ -398,13 +398,13 @@ export async function main(
       if (prevJudges.join() !== judges.map((j) => j.id).join()) {
         deps.error(
           `--retry: earlier grades used judges ${prevJudges.join(", ") || "(none)"}; pass the same --judge list`,
-        );
+       );
         return 1;
       }
       keepGrades = keepableGrades(readJsonl<Grade>(prevGrades));
       deps.log(
         `--retry: keeping ${keepGrades.length} grades, regrading ${answers.length - keepGrades.length}`,
-      );
+     );
     }
     const keyOf = (x: { itemId: string; system: string; run: number }) =>
       `${x.itemId}\u0000${x.system}\u0000${x.run}`;
@@ -416,8 +416,8 @@ export async function main(
           bench,
           items,
           answers.filter((x) => !keptKeys.has(keyOf(x))),
-        ),
-      ))
+       ),
+     ))
         deps.log(l);
     }
     if (command === "quote-grade") return 0;
@@ -425,13 +425,13 @@ export async function main(
     if (paid.length > 0 && !values.yes) {
       deps.error(
         `Refusing to grade with judge(s) ${paid.join(", ")} without --yes: they make paid calls. Check the quote above, then rerun with --yes.`,
-      );
+     );
       return 2;
     }
     if (bench.name === "verifiability" && paid.length > 0) {
       deps.log(
         "Note: verifiability grades product answers against the pages captured at answer time (run --yes); model-track answers read snapshot filings, and other cited URLs are fetched live (networked, no cost).",
-      );
+     );
     }
     let result: Awaited<ReturnType<typeof grade>>;
     try {
@@ -447,7 +447,7 @@ export async function main(
     } catch (err) {
       deps.error(
         `Refusing to grade: ${err instanceof Error ? err.message : String(err)}`,
-      );
+     );
       return 1;
     }
     deps.log(COI_NOTE);
@@ -464,20 +464,20 @@ export async function main(
       const spread = result.runSpread[k];
       deps.log(
         `${k}: ${fmt(s)}${sp ? ` (${sp})` : ""}${spread ? ` runs ${spread.min.toFixed(3)}..${spread.max.toFixed(3)}` : ""}`,
-      );
+     );
     }
     for (const [k, s] of Object.entries(result.errorRates))
       deps.log(`${k}: ${fmt(s)}`);
     for (const [c, { agreement, kappa }] of Object.entries(
       result.judgeAgreement,
-    )) {
+   )) {
       deps.log(
         `judge agreement ${c}: ${fmt(agreement)}, kappa ${Number.isNaN(kappa) ? "undefined (no variation)" : kappa.toFixed(3)}`,
-      );
+     );
     }
     deps.log(
       `errors: ${result.errors}, judge errors: ${result.judgeErrors} -> ${path.join(dir, "scores.json")}`,
-    );
+   );
 
     return 0;
   }
@@ -491,7 +491,7 @@ export async function main(
       const scoresFile = path.join(
         path.dirname(path.resolve(file)),
         "scores.json",
-      );
+     );
       const scores = existsSync(scoresFile)
         ? (JSON.parse(readFileSync(scoresFile, "utf8")) as {
             bench?: string;
@@ -505,13 +505,13 @@ export async function main(
     if (!A.itemsSha256 || !B.itemsSha256) {
       deps.error(
         "Refusing to compare: a scores.json with itemsSha256 must sit beside each grades file.",
-      );
+     );
       return 1;
     }
     if (A.bench !== B.bench || A.itemsSha256 !== B.itemsSha256) {
       deps.error(
         `Refusing to compare: different benches or item sets (${A.bench} ${A.itemsSha256.slice(0, 12)} vs ${B.bench} ${B.itemsSha256.slice(0, 12)}).`,
-      );
+     );
       return 1;
     }
     const d = pairedBootstrapDiff(itemMeans(A.grades), itemMeans(B.grades), {
@@ -523,7 +523,7 @@ export async function main(
           ? "no winner (paired CI includes zero, or too few shared items)"
           : `${d.winner === "a" ? "A" : "B"} beats ${d.winner === "a" ? "B" : "A"} (paired CI excludes zero)`
       }`,
-    );
+   );
     return 0;
   }
 
@@ -543,5 +543,5 @@ if (
       console.error(err instanceof Error ? err.message : err);
       process.exitCode = 1;
     },
-  );
+ );
 }
