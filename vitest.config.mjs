@@ -2,5 +2,5 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  test: { include: ["harness/src/**/*.test.ts", "*bench/src/**/*.test.ts"] },
+  test: { include: ["harness/src/**/*.test.ts", "*bench/src/**/*.test.ts", "external/**/*.test.ts"] },
 });

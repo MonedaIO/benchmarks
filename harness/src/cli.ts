@@ -235,6 +235,9 @@ export async function main(
       limit: num(values.limit),
       pilot: values.pilot,
       ids: values.item,
+      // The stub never downloads a third-party dataset: external benches
+      // use their synthetic fixture.
+      offline: a === FREE,
     };
     const items = await selectItems(bench, selection);
     // A run of picked items gets its own dir so it never overwrites the

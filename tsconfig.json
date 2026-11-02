@@ -14,5 +14,5 @@
     "lib": ["ESNext"],
     "types": ["node"]
   },
-  "include": ["harness/src/**/*.ts", "*bench/src/**/*.ts"]
+  "include": ["harness/src/**/*.ts", "*bench/src/**/*.ts", "external/**/*.ts"]
 }
