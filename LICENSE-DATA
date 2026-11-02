@@ -1,0 +1,12 @@
+The benchmark items in this repository (every */data/*.jsonl file and every
+hf/*/data/*.jsonl file) are licensed under the Creative Commons Attribution
+4.0 International licence (CC BY 4.0).
+
+Copyright (c) 2026 Moneda Digital GmbH
+
+Full licence text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+Attribution: "Moneda Bench, created and maintained by Moneda,
+https://benchmarks.finance".
+
+The code (harness, graders, scripts) is under the MIT licence in LICENSE.
