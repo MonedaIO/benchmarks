@@ -12,7 +12,7 @@ const rows = (f: string) =>
 
 describe("Hugging Face dataset folders", () => {
   it("one per live benchmark", () => {
-    expect(DATASETS.sort()).toEqual(["citebench", "filingsbench", "portfoliobench"]);
+    expect(DATASETS.sort()).toEqual(["advicebench", "citebench", "filingsbench", "portfoliobench"]);
   });
 
   for (const d of DATASETS) {

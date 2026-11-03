@@ -11,6 +11,7 @@ import { COI_NOTE } from "./core/coi";
 import type { Judge } from "./core/judge";
 import { judgeProvider } from "./core/judge";
 import {
+  dedupeAnswers,
   grade,
   itemsSha256,
   judgeLoadOf,
@@ -45,7 +46,7 @@ const USAGE = `Usage (pnpm evals <command>):
   run   <system> <bench> [--runs N] [--concurrency N] [--timeout ms] [--snapshot file]
                          [--split public|private] [--limit N] [--pilot] [--item id]... [--out dir] [--retry] [--yes]
   quote-grade <answers.jsonl> [--judge name]... [--snapshot file]
-  grade <answers.jsonl>  [--judge name]... [--snapshot file] [--audit kappa.json] [--retry] [--yes]
+  grade <answers.jsonl>  [--judge name]... [--tiebreak name] [--snapshot file] [--audit kappa.json] [--retry] [--yes]
   compare <gradesA.jsonl> <gradesB.jsonl>   (paired bootstrap, same item set only)
 
 Systems also resolve by prefix: model:<id>, model-notools:<id>, chatgpt:<id>,
@@ -55,7 +56,8 @@ gemini:<id>. --pilot: the bench's fixed 10-item stratified sample.
 --retry: redo only what failed. run --retry re-answers the errored answers in
 the run's --out dir (same selection); grade --retry regrades only "error" and
 "judge_error" grades beside the answers (same judges). Quotes cover the redo.
-Repeat --judge for a panel; judges must come from different providers, and a
+--tiebreak names a third-provider judge called only when the panel splits
+evenly (verifiability support votes). Repeat --judge for a panel; judges must come from different providers, and a
 judge that may share a provider with a graded system needs a second one.
 --runs defaults to the bench's own (3 for groundedness and markets).
 
@@ -183,6 +185,7 @@ export async function main(
       limit: { type: "string" },
       out: { type: "string" },
       judge: { type: "string", multiple: true },
+      tiebreak: { type: "string" },
       system: { type: "string", multiple: true },
       item: { type: "string", multiple: true },
       pilot: { type: "boolean", default: false },
@@ -273,7 +276,9 @@ export async function main(
        );
         return 1;
       }
-      keep = readJsonl<Answer>(prevAnswers).filter((x) => !x.error);
+      keep = dedupeAnswers(readJsonl<Answer>(prevAnswers)).filter(
+        (x) => !x.error,
+      );
     }
     const todo = keep
       ? items.filter((i) => keep.filter((x) => x.itemId === i.id).length < runs)
@@ -367,7 +372,9 @@ export async function main(
      );
       return 1;
     }
-    const answers = readJsonl<Answer>(answersFile);
+    // One answer per item/run (dedupeAnswers): a doubled run must not
+    // weigh an item twice.
+    const answers = dedupeAnswers(readJsonl<Answer>(answersFile));
     const judges: Judge[] = [];
     for (const judgeName of values.judge ?? []) {
       const makeJudge = deps.judges[judgeName];
@@ -376,6 +383,22 @@ export async function main(
         return 1;
       }
       judges.push(makeJudge());
+    }
+    let tiebreaker: Judge | undefined;
+    if (values.tiebreak) {
+      const make = deps.judges[values.tiebreak];
+      if (!make) {
+        deps.error(`unknown judge: ${values.tiebreak}`);
+        return 1;
+      }
+      tiebreaker = make();
+      const providers = judges.map((j) => judgeProvider(j.id));
+      if (providers.includes(judgeProvider(tiebreaker.id))) {
+        deps.error(
+          `--tiebreak ${tiebreaker.id} shares a provider with the panel; pick a third provider`,
+        );
+        return 1;
+      }
     }
     const panel = panelProblem(
       bench,
@@ -422,9 +445,24 @@ export async function main(
        ),
      ))
         deps.log(l);
+      if (tiebreaker)
+        for (const l of judgeQuoteLines(
+          [tiebreaker],
+          judgeLoadOf(
+            bench,
+            items,
+            answers.filter((x) => !keptKeys.has(keyOf(x))),
+          ),
+        ))
+          deps.log(
+            `Tie-breaker (upper bound; it only judges the panel's even splits, ~10-20% of support calls): ${l}`,
+          );
     }
     if (command === "quote-grade") return 0;
-    const paid = (values.judge ?? []).filter((n) => !FREE_JUDGES.has(n));
+    const paid = [
+      ...(values.judge ?? []),
+      ...(values.tiebreak ? [values.tiebreak] : []),
+    ].filter((n) => !FREE_JUDGES.has(n));
     if (paid.length > 0 && !values.yes) {
       deps.error(
         `Refusing to grade with judge(s) ${paid.join(", ")} without --yes: they make paid calls. Check the quote above, then rerun with --yes.`,
@@ -442,6 +480,7 @@ export async function main(
         items,
         snapshot: snapshotFrom(values.snapshot),
         judges,
+        tiebreaker,
         outDir: dir,
         meta: { date: deps.today(), gitSha: deps.gitSha() },
         audit: values.audit ? auditFrom(values.audit) : undefined,
@@ -517,9 +556,14 @@ export async function main(
      );
       return 1;
     }
-    const d = pairedBootstrapDiff(itemMeans(A.grades), itemMeans(B.grades), {
-      clusters: itemClusters(A.grades),
-    });
+    // The bench's headline per grade (Groundedness penalises wrong answers),
+    // so compare never names a different winner than the scores do.
+    const pick = deps.benches[A.bench as string]?.compareScore;
+    const d = pairedBootstrapDiff(
+      itemMeans(A.grades, pick),
+      itemMeans(B.grades, pick),
+      { clusters: itemClusters(A.grades) },
+    );
     deps.log(
       `score A - B: ${d.diff.toFixed(3)} [${d.lo.toFixed(3)}, ${d.hi.toFixed(3)}] n=${d.n}; ${
         d.winner === null

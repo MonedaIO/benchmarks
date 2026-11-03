@@ -9,7 +9,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const MAP = { filingsbench: "filingsbench", portfoliobench: "portfoliobench", citebench: "citebench" };
+const MAP = { filingsbench: "filingsbench", portfoliobench: "portfoliobench", citebench: "citebench", advicebench: "advicebench" };
 const str = (v) => (v === undefined ? null : JSON.stringify(v));
 
 for (const [bench, dataset] of Object.entries(MAP)) {
